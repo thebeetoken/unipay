@@ -65,11 +65,11 @@ contract UniswapExchangeInterface is ERC20 {
 
 contract Unipay {
     UniswapFactoryInterface factory;
-    
+
     constructor(address _factory) public {
         factory = UniswapFactoryInterface(_factory);
     }
-    
+
     function price(
         address inputToken,
         address outputToken,
@@ -83,7 +83,7 @@ contract Unipay {
         uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
         return (tokenCost, etherCost);
     }
-    
+
     function collect(
         address spender,
         address recipient,
@@ -92,22 +92,20 @@ contract Unipay {
         uint256 outputAmount,
         uint256 deadline
     ) public {
-        ERC20 inToken = ERC20(inputToken);
-        ERC20 outToken = ERC20(outputToken);
         UniswapExchangeInterface inExchange =
             UniswapExchangeInterface(factory.getExchange(inputToken));
         (uint256 tokenCost, uint256 etherCost) =
             price(inputToken, outputToken, outputAmount);
-        uint256 inBalance = inToken.balanceOf(address(this));
-        uint256 outBalance = outToken.balanceOf(address(this));
+        uint256 oldBalance = ERC20(inputToken).balanceOf(address(this));
         require(
-            inToken.transferFrom(spender, address(this), tokenCost),
+            ERC20(inputToken).transferFrom(spender, address(this), tokenCost),
             "Failed to transfer input tokens in."
         );
         require(
-            inToken.balanceOf(address(this)) >= inBalance + tokenCost,
+            ERC20(inputToken).balanceOf(address(this)) >= oldBalance + tokenCost,
             "Balance validation failed after transfer."
         );
+        oldBalance = ERC20(outputToken).balanceOf(address(this));
         inExchange.tokenToTokenSwapOutput(
             outputAmount,
             tokenCost,
@@ -116,13 +114,17 @@ contract Unipay {
             outputToken
         );
         require(
-            outToken.balanceOf(address(this)) >= outBalance + outputAmount,
+            ERC20(outputToken).balanceOf(address(this)) >= oldBalance + outputAmount,
             "Balance validation failed after swap."
         );
+        oldBalance = ERC20(outputToken).allowance(address(this), recipient);
         require(
-            outToken.approve(recipient, outputAmount),
+            ERC20(outputToken).approve(recipient, oldBalance + outputAmount),
             "Failed to approve funds for recipient."
+        );
+        require(
+            ERC20(outputToken).allowance(address(this), recipient) > oldBalance,
+            "Allowance validation failed after approval. "
         );
     }
 }
-
