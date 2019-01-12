@@ -65,20 +65,23 @@ contract UniswapExchangeInterface is ERC20 {
 
 contract Unipay {
     UniswapFactoryInterface factory;
+    ERC20 outputToken;
+    address recipient;
 
-    constructor(address _factory) public {
+    constructor(address _factory, address _recipient, address _token) public {
         factory = UniswapFactoryInterface(_factory);
+        outputToken = ERC20(_token);
+        recipient = _recipient;
     }
 
     function price(
         address inputToken,
-        address outputToken,
         uint256 outputAmount
     ) public view returns (uint256, uint256) {
         UniswapExchangeInterface inExchange =
             UniswapExchangeInterface(factory.getExchange(inputToken));
         UniswapExchangeInterface outExchange =
-            UniswapExchangeInterface(factory.getExchange(outputToken));
+            UniswapExchangeInterface(factory.getExchange(address(outputToken)));
         uint256 etherCost = outExchange.getEthToTokenOutputPrice(outputAmount);
         uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
         return (tokenCost, etherCost);
@@ -86,16 +89,14 @@ contract Unipay {
 
     function collect(
         address spender,
-        address recipient,
         address inputToken,
-        address outputToken,
         uint256 outputAmount,
         uint256 deadline
     ) public {
         UniswapExchangeInterface inExchange =
             UniswapExchangeInterface(factory.getExchange(inputToken));
         (uint256 tokenCost, uint256 etherCost) =
-            price(inputToken, outputToken, outputAmount);
+            price(inputToken, outputAmount);
         uint256 oldBalance = ERC20(inputToken).balanceOf(address(this));
         require(
             ERC20(inputToken).transferFrom(spender, address(this), tokenCost),
@@ -111,7 +112,7 @@ contract Unipay {
             tokenCost,
             etherCost,
             deadline,
-            outputToken
+            address(outputToken)
         );
         require(
             ERC20(outputToken).balanceOf(address(this)) >= oldBalance + outputAmount,
