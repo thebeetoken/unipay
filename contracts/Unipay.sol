@@ -106,7 +106,7 @@ contract Unipay {
             ERC20(inputToken).balanceOf(address(this)) >= oldBalance + tokenCost,
             "Balance validation failed after transfer."
         );
-        oldBalance = ERC20(outputToken).balanceOf(address(this));
+        oldBalance = outputToken.balanceOf(address(this));
         inExchange.tokenToTokenSwapOutput(
             outputAmount,
             tokenCost,
@@ -115,16 +115,16 @@ contract Unipay {
             address(outputToken)
         );
         require(
-            ERC20(outputToken).balanceOf(address(this)) >= oldBalance + outputAmount,
+            outputToken.balanceOf(address(this)) >= oldBalance + outputAmount,
             "Balance validation failed after swap."
         );
-        oldBalance = ERC20(outputToken).allowance(address(this), recipient);
+        oldBalance = outputToken.allowance(address(this), recipient);
         require(
-            ERC20(outputToken).approve(recipient, oldBalance + outputAmount),
+            outputToken.approve(recipient, oldBalance + outputAmount),
             "Failed to approve funds for recipient."
         );
         require(
-            ERC20(outputToken).allowance(address(this), recipient) > oldBalance,
+            outputToken.allowance(address(this), recipient) > oldBalance,
             "Allowance validation failed after approval. "
         );
     }
