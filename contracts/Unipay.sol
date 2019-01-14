@@ -216,6 +216,7 @@ library SafeERC20 {
 
 library SafeExchange {
     using SafeMath for uint256;
+
     function swapTokens(
         UniswapExchangeInterface _exchange,
         uint256 _outValue,
