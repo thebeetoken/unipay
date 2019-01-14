@@ -108,7 +108,7 @@ contract Unipay {
         );
         oldBalance = ERC20(inputToken).allowance(address(this), address(inExchange));
         require(
-            ERC20(inputToken).approve(address(inExchange), tokenCost),
+            ERC20(inputToken).approve(address(inExchange), oldBalance + tokenCost),
             "Failed to approve exchange withdrawal of tokens."
         );
         require(
