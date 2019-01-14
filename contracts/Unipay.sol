@@ -63,7 +63,151 @@ contract UniswapExchangeInterface is ERC20 {
     function setup(address token_addr) external;
 }
 
+library SafeMath {
+    int256 constant private INT256_MIN = -2**255;
+
+    /**
+    * @dev Multiplies two unsigned integers, reverts on overflow.
+    */
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b);
+
+        return c;
+    }
+
+    /**
+    * @dev Multiplies two signed integers, reverts on overflow.
+    */
+    function mul(int256 a, int256 b) internal pure returns (int256) {
+        // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
+        // benefit is lost if 'b' is also tested.
+        // See: https://github.com/OpenZeppelin/openzeppelin-solidity/pull/522
+        if (a == 0) {
+            return 0;
+        }
+
+        require(!(a == -1 && b == INT256_MIN)); // This is the only case of overflow not detected by the check below
+
+        int256 c = a * b;
+        require(c / a == b);
+
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two unsigned integers truncating the quotient, reverts on division by zero.
+    */
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0);
+        uint256 c = a / b;
+        // assert(a == b * c + a % b); // There is no case in which this doesn't hold
+
+        return c;
+    }
+
+    /**
+    * @dev Integer division of two signed integers truncating the quotient, reverts on division by zero.
+    */
+    function div(int256 a, int256 b) internal pure returns (int256) {
+        require(b != 0); // Solidity only automatically asserts when dividing by 0
+        require(!(b == -1 && a == INT256_MIN)); // This is the only case of overflow
+
+        int256 c = a / b;
+
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two unsigned integers, reverts on overflow (i.e. if subtrahend is greater than minuend).
+    */
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a);
+        uint256 c = a - b;
+
+        return c;
+    }
+
+    /**
+    * @dev Subtracts two signed integers, reverts on overflow.
+    */
+    function sub(int256 a, int256 b) internal pure returns (int256) {
+        int256 c = a - b;
+        require((b >= 0 && c <= a) || (b < 0 && c > a));
+
+        return c;
+    }
+
+    /**
+    * @dev Adds two unsigned integers, reverts on overflow.
+    */
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a);
+
+        return c;
+    }
+
+    /**
+    * @dev Adds two signed integers, reverts on overflow.
+    */
+    function add(int256 a, int256 b) internal pure returns (int256) {
+        int256 c = a + b;
+        require((b >= 0 && c >= a) || (b < 0 && c < a));
+
+        return c;
+    }
+
+    /**
+    * @dev Divides two unsigned integers and returns the remainder (unsigned integer modulo),
+    * reverts when dividing by zero.
+    */
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b != 0);
+        return a % b;
+    }
+}
+
+library SafeERC20 {
+    using SafeMath for uint256;
+
+    function transferTokens(ERC20 _token, address _from, address _to, uint256 _value) public {
+        uint256 oldBalance = _token.balanceOf(_to);
+        require(
+            _token.transferFrom(_from, _to, _value),
+            "Failed to transfer tokens."
+        );
+        require(
+            _token.balanceOf(_to) >= oldBalance.add(_value),
+            "Balance validation failed after transfer."
+        );
+    }
+
+    function approveTokens(ERC20 _token, address _spender, uint256 _value) public {
+        uint256 nextAllowance = _token.allowance(address(this), _spender).add(_value);
+        require(
+            _token.approve(_spender, nextAllowance),
+            "Failed to approve exchange withdrawal of tokens."
+        );
+        require(
+            _token.allowance(address(this), _spender) >= nextAllowance,
+            "Failed to validate token approval."
+        );
+
+    }
+}
+
 contract Unipay {
+    using SafeMath for uint256;
+    using SafeERC20 for ERC20;
     UniswapFactoryInterface factory;
     ERC20 outputToken;
     address recipient;
@@ -97,25 +241,9 @@ contract Unipay {
             UniswapExchangeInterface(factory.getExchange(inputToken));
         (uint256 tokenCost, uint256 etherCost) =
             price(inputToken, outputAmount);
-        uint256 oldBalance = ERC20(inputToken).balanceOf(address(this));
-        require(
-            ERC20(inputToken).transferFrom(spender, address(this), tokenCost),
-            "Failed to transfer input tokens in."
-        );
-        require(
-            ERC20(inputToken).balanceOf(address(this)) >= oldBalance + tokenCost,
-            "Balance validation failed after transfer."
-        );
-        oldBalance = ERC20(inputToken).allowance(address(this), address(inExchange));
-        require(
-            ERC20(inputToken).approve(address(inExchange), oldBalance + tokenCost),
-            "Failed to approve exchange withdrawal of tokens."
-        );
-        require(
-            ERC20(inputToken).allowance(address(this), address(inExchange)) >= oldBalance + tokenCost,
-            "Failed to validate token approval."
-        );
-        oldBalance = outputToken.balanceOf(address(this));
+        ERC20(inputToken).transferTokens(spender, address(this), tokenCost);
+        ERC20(inputToken).approveTokens(address(inExchange), tokenCost);
+        uint256 oldBalance = outputToken.balanceOf(address(this));
         inExchange.tokenToTokenSwapOutput(
             outputAmount,
             tokenCost,
@@ -127,14 +255,6 @@ contract Unipay {
             outputToken.balanceOf(address(this)) >= oldBalance + outputAmount,
             "Balance validation failed after swap."
         );
-        oldBalance = outputToken.allowance(address(this), recipient);
-        require(
-            outputToken.approve(recipient, oldBalance + outputAmount),
-            "Failed to approve funds for recipient."
-        );
-        require(
-            outputToken.allowance(address(this), recipient) > oldBalance,
-            "Allowance validation failed after approval. "
-        );
+        outputToken.approveTokens(recipient, outputAmount);
     }
 }
