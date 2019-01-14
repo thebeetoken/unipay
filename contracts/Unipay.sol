@@ -248,8 +248,10 @@ contract Unipay {
         address _token,
         uint256 _value
     ) public view returns (uint256, uint256, UniswapExchangeInterface) {
-        UniswapExchangeInterface inExchange = UniswapExchangeInterface(factory.getExchange(_token));
-        UniswapExchangeInterface outExchange = UniswapExchangeInterface(factory.getExchange(address(outToken)));
+        UniswapExchangeInterface inExchange =
+          UniswapExchangeInterface(factory.getExchange(_token));
+        UniswapExchangeInterface outExchange =
+          UniswapExchangeInterface(factory.getExchange(address(outToken)));
         uint256 etherCost = outExchange.getEthToTokenOutputPrice(_value);
         uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
         return (tokenCost, etherCost, inExchange);
@@ -264,12 +266,12 @@ contract Unipay {
         (
             uint256 etherCost,
             uint256 tokenCost,
-            UniswapExchangeInterface inExchange
+            UniswapExchangeInterface exchange
         ) = price(_token, _value);
 
         ERC20(_token).transferTokens(_from, address(this), tokenCost);
-        ERC20(_token).approveTokens(address(inExchange), tokenCost);
-        inExchange.swapTokens(_value, tokenCost, etherCost, _deadline, outToken);
+        ERC20(_token).approveTokens(address(exchange), tokenCost);
+        exchange.swapTokens(_value, tokenCost, etherCost, _deadline, outToken);
         outToken.approveTokens(recipient, _value);
     }
 }
