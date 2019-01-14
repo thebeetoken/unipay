@@ -248,12 +248,12 @@ contract Unipay {
     function price(
         address _token,
         uint256 _value
-    ) public view returns (uint256, uint256) {
+    ) public view returns (uint256, uint256, UniswapExchangeInterface) {
         UniswapExchangeInterface inExchange = UniswapExchangeInterface(factory.getExchange(_token));
         UniswapExchangeInterface outExchange = UniswapExchangeInterface(factory.getExchange(address(outToken)));
         uint256 etherCost = outExchange.getEthToTokenOutputPrice(_value);
         uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
-        return (tokenCost, etherCost);
+        return (tokenCost, etherCost, inExchange);
     }
 
     function collect(
@@ -263,10 +263,11 @@ contract Unipay {
         uint256 _deadline
     ) public {
         ERC20 inToken = ERC20(_token);
-        UniswapExchangeInterface inExchange = UniswapExchangeInterface(factory.getExchange(_token));
-        UniswapExchangeInterface outExchange = UniswapExchangeInterface(factory.getExchange(address(outToken)));
-        uint256 etherCost = outExchange.getEthToTokenOutputPrice(_value);
-        uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
+        (
+            uint256 etherCost,
+            uint256 tokenCost,
+            UniswapExchangeInterface inExchange
+        ) = price(_token, _value);
 
         inToken.transferTokens(_from, address(this), tokenCost);
         inToken.approveTokens(address(inExchange), tokenCost);
