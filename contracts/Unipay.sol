@@ -204,56 +204,73 @@ library SafeERC20 {
     }
 }
 
+library SafeExchange {
+    using SafeMath for uint256;
+    function swapTokens(
+        UniswapExchangeInterface _exchange,
+        uint256 _outValue,
+        uint256 _inValue,
+        uint256 _ethValue,
+        uint256 _deadline,
+        ERC20 _outToken
+    ) public {
+        uint256 nextBalance = _outToken.balanceOf(address(this)).add(_outValue);
+        _exchange.tokenToTokenSwapOutput(
+            _outValue,
+            _inValue,
+            _ethValue,
+            _deadline,
+            address(_outToken)
+        );
+        require(
+            _outToken.balanceOf(address(this)) >= nextBalance,
+            "Balance validation failed after swap."
+        );
+    }
+
+}
+
 contract Unipay {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
+    using SafeExchange for UniswapExchangeInterface;
+
     UniswapFactoryInterface factory;
-    address outputToken;
+    ERC20 outToken;
     address recipient;
 
     constructor(address _factory, address _recipient, address _token) public {
         factory = UniswapFactoryInterface(_factory);
-        outputToken = _token;
+        outToken = ERC20(_token);
         recipient = _recipient;
     }
 
     function price(
-        address inputToken,
-        uint256 outputAmount
+        address _token,
+        uint256 _value
     ) public view returns (uint256, uint256) {
-        UniswapExchangeInterface inExchange =
-            UniswapExchangeInterface(factory.getExchange(inputToken));
-        UniswapExchangeInterface outExchange =
-            UniswapExchangeInterface(factory.getExchange(address(outputToken)));
-        uint256 etherCost = outExchange.getEthToTokenOutputPrice(outputAmount);
+        UniswapExchangeInterface inExchange = UniswapExchangeInterface(factory.getExchange(_token));
+        UniswapExchangeInterface outExchange = UniswapExchangeInterface(factory.getExchange(address(outToken)));
+        uint256 etherCost = outExchange.getEthToTokenOutputPrice(_value);
         uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
         return (tokenCost, etherCost);
     }
 
     function collect(
-        address spender,
-        address inputToken,
-        uint256 outputAmount,
-        uint256 deadline
+        address _from,
+        address _token,
+        uint256 _value,
+        uint256 _deadline
     ) public {
-        UniswapExchangeInterface inExchange =
-            UniswapExchangeInterface(factory.getExchange(inputToken));
-        (uint256 tokenCost, uint256 etherCost) =
-            price(inputToken, outputAmount);
-        ERC20(inputToken).transferTokens(spender, address(this), tokenCost);
-        ERC20(inputToken).approveTokens(address(inExchange), tokenCost);
-        uint256 oldBalance = ERC20(outputToken).balanceOf(address(this));
-        inExchange.tokenToTokenSwapOutput(
-            outputAmount,
-            tokenCost,
-            etherCost,
-            deadline,
-            address(outputToken)
-        );
-        require(
-            ERC20(outputToken).balanceOf(address(this)) >= oldBalance + outputAmount,
-            "Balance validation failed after swap."
-        );
-        ERC20(outputToken).approveTokens(recipient, outputAmount);
+        UniswapExchangeInterface inExchange = UniswapExchangeInterface(factory.getExchange(_token));
+        UniswapExchangeInterface outExchange = UniswapExchangeInterface(factory.getExchange(address(outToken)));
+        ERC20 inToken = ERC20(_token);
+        uint256 etherCost = outExchange.getEthToTokenOutputPrice(_value);
+        uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
+
+        inToken.transferTokens(_from, address(this), tokenCost);
+        inToken.approveTokens(address(inExchange), tokenCost);
+        inExchange.swapTokens(_value, tokenCost, etherCost, _deadline, outToken);
+        outToken.approveTokens(recipient, _value);
     }
 }
