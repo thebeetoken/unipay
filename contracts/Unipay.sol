@@ -262,9 +262,9 @@ contract Unipay {
         uint256 _value,
         uint256 _deadline
     ) public {
+        ERC20 inToken = ERC20(_token);
         UniswapExchangeInterface inExchange = UniswapExchangeInterface(factory.getExchange(_token));
         UniswapExchangeInterface outExchange = UniswapExchangeInterface(factory.getExchange(address(outToken)));
-        ERC20 inToken = ERC20(_token);
         uint256 etherCost = outExchange.getEthToTokenOutputPrice(_value);
         uint256 tokenCost = inExchange.getTokenToEthOutputPrice(etherCost);
 
