@@ -179,7 +179,7 @@ library SafeMath {
 library SafeERC20 {
     using SafeMath for uint256;
 
-    function transferTokens(ERC20 _token, address _from, address _to, uint256 _value) public {
+    function transferTokens(ERC20 _token, address _from, address _to, uint256 _value) internal {
         uint256 oldBalance = _token.balanceOf(_to);
         require(
             _token.transferFrom(_from, _to, _value),
@@ -191,7 +191,7 @@ library SafeERC20 {
         );
     }
 
-    function approveTokens(ERC20 _token, address _spender, uint256 _value) public {
+    function approveTokens(ERC20 _token, address _spender, uint256 _value) internal {
         uint256 nextAllowance = _token.allowance(address(this), _spender).add(_value);
         require(
             _token.approve(_spender, nextAllowance),
@@ -213,7 +213,7 @@ library SafeExchange {
         uint256 _ethValue,
         uint256 _deadline,
         ERC20 _outToken
-    ) public {
+    ) internal {
         uint256 nextBalance = _outToken.balanceOf(address(this)).add(_outValue);
         _exchange.tokenToTokenSwapOutput(
             _outValue,
@@ -227,7 +227,6 @@ library SafeExchange {
             "Balance validation failed after swap."
         );
     }
-
 }
 
 contract Unipay {
