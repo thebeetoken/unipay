@@ -201,7 +201,6 @@ library SafeERC20 {
             _token.allowance(address(this), _spender) >= nextAllowance,
             "Failed to validate token approval."
         );
-
     }
 }
 
@@ -209,12 +208,12 @@ contract Unipay {
     using SafeMath for uint256;
     using SafeERC20 for ERC20;
     UniswapFactoryInterface factory;
-    ERC20 outputToken;
+    address outputToken;
     address recipient;
 
     constructor(address _factory, address _recipient, address _token) public {
         factory = UniswapFactoryInterface(_factory);
-        outputToken = ERC20(_token);
+        outputToken = _token;
         recipient = _recipient;
     }
 
@@ -243,7 +242,7 @@ contract Unipay {
             price(inputToken, outputAmount);
         ERC20(inputToken).transferTokens(spender, address(this), tokenCost);
         ERC20(inputToken).approveTokens(address(inExchange), tokenCost);
-        uint256 oldBalance = outputToken.balanceOf(address(this));
+        uint256 oldBalance = ERC20(outputToken).balanceOf(address(this));
         inExchange.tokenToTokenSwapOutput(
             outputAmount,
             tokenCost,
@@ -252,9 +251,9 @@ contract Unipay {
             address(outputToken)
         );
         require(
-            outputToken.balanceOf(address(this)) >= oldBalance + outputAmount,
+            ERC20(outputToken).balanceOf(address(this)) >= oldBalance + outputAmount,
             "Balance validation failed after swap."
         );
-        outputToken.approveTokens(recipient, outputAmount);
+        ERC20(outputToken).approveTokens(recipient, outputAmount);
     }
 }
