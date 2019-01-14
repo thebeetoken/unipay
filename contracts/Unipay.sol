@@ -262,15 +262,14 @@ contract Unipay {
         uint256 _value,
         uint256 _deadline
     ) public {
-        ERC20 inToken = ERC20(_token);
         (
             uint256 etherCost,
             uint256 tokenCost,
             UniswapExchangeInterface inExchange
         ) = price(_token, _value);
 
-        inToken.transferTokens(_from, address(this), tokenCost);
-        inToken.approveTokens(address(inExchange), tokenCost);
+        ERC20(_token).transferTokens(_from, address(this), tokenCost);
+        ERC20(_token).approveTokens(address(inExchange), tokenCost);
         inExchange.swapTokens(_value, tokenCost, etherCost, _deadline, outToken);
         outToken.approveTokens(recipient, _value);
     }
