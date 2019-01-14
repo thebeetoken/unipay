@@ -106,6 +106,10 @@ contract Unipay {
             ERC20(inputToken).balanceOf(address(this)) >= oldBalance + tokenCost,
             "Balance validation failed after transfer."
         );
+        require(
+            ERC20(inputToken).approve(address(inExchange), tokenCost),
+            "Failed to approve exchange withdrawal of tokens."
+        );
         oldBalance = outputToken.balanceOf(address(this));
         inExchange.tokenToTokenSwapOutput(
             outputAmount,
