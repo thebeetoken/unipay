@@ -275,8 +275,8 @@ contract Unipay {
         uint256 _deadline
     ) public {
         (
-            uint256 etherCost,
             uint256 tokenCost,
+            uint256 etherCost,
             UniswapExchangeInterface exchange
         ) = price(_token, _value);
 
