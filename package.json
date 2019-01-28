@@ -7,7 +7,9 @@
     "openzeppelin-solidity": "^2.1.2",
     "uniswap-solidity": "^1.0.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "truffle": "^5.0.2"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
