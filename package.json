@@ -11,6 +11,7 @@
     "truffle": "^5.0.2"
   },
   "scripts": {
+    "compile": "./node_modules/.bin/truffle compile",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
