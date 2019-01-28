@@ -34,6 +34,14 @@ contract Unipay {
         return (tokenCost, etherCost, inExchange);
     }
 
+    function price(
+      uint256 _value
+    ) public view returns (uint256, UniswapExchangeInterface) {
+      UniswapExchangeInterface exchange =
+        UniswapExchangeInterface(factory.getExchange(address(outToken)));
+      return (exchange.getEthToTokenOutputPrice(_value), exchange);
+    }
+
     function collect(
         address _from,
         address _token,
@@ -49,6 +57,19 @@ contract Unipay {
         ERC20(_token).transferTokens(_from, address(this), tokenCost);
         ERC20(_token).approveTokens(address(exchange), tokenCost);
         exchange.swapTokens(_value, tokenCost, etherCost, _deadline, outToken);
+        outToken.approveTokens(recipient, _value);
+    }
+
+    function pay(
+        uint256 _value,
+        uint256 _deadline
+    ) public payable {
+        (
+            uint256 etherCost,
+            UniswapExchangeInterface exchange
+        ) = price(_value);
+        require(msg.value >= etherCost, "Insufficient ether sent.");
+        exchange.swapEther(_value, etherCost, _deadline, outToken);
         outToken.approveTokens(recipient, _value);
     }
 }

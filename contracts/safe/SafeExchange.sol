@@ -28,4 +28,19 @@ library SafeExchange {
             "Balance validation failed after swap."
         );
     }
+
+    function swapEther(
+        UniswapExchangeInterface _exchange,
+        uint256 _outValue,
+        uint256 _ethValue,
+        uint256 _deadline,
+        ERC20 _outToken
+    ) internal {
+        uint256 nextBalance = _outToken.balanceOf(address(this)).add(_outValue);
+        _exchange.ethToTokenSwapOutput.value(_ethValue)(_outValue, _deadline);
+        require(
+            _outToken.balanceOf(address(this)) >= nextBalance,
+            "Balance validation failed after swap."
+        );
+    }
 }
