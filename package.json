@@ -1,0 +1,31 @@
+{
+  "name": "unipay",
+  "version": "1.0.0",
+  "description": "Uniswap-enabled payments.",
+  "main": "index.js",
+  "dependencies": {
+    "openzeppelin-solidity": "^2.1.2",
+    "uniswap-solidity": "^1.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woeltjen/unipay.git"
+  },
+  "keywords": [
+    "solidity",
+    "erc20",
+    "uniswap",
+    "payments",
+    "ethereum"
+  ],
+  "author": "vic@beetoken.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/woeltjen/unipay/issues"
+  },
+  "homepage": "https://github.com/woeltjen/unipay#readme"
+}
