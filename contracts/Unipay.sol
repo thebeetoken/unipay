@@ -68,6 +68,7 @@ contract Unipay {
             uint256 etherCost,
             UniswapExchangeInterface exchange
         ) = price(_value);
+
         require(msg.value >= etherCost, "Insufficient ether sent.");
         exchange.swapEther(_value, etherCost, _deadline, outToken);
         outToken.approveTokens(recipient, _value);
