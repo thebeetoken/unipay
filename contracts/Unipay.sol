@@ -1,6 +1,6 @@
 pragma solidity ^0.5.2;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import 'uniswap-solidity/contracts/Uniswap.sol';
 import "./safe/SafeERC20.sol";
@@ -8,16 +8,16 @@ import "./safe/SafeExchange.sol";
 
 contract Unipay {
     using SafeMath for uint256;
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
     using SafeExchange for UniswapExchangeInterface;
 
     UniswapFactoryInterface factory;
-    ERC20 outToken;
+    IERC20 outToken;
     address recipient;
 
     constructor(address _factory, address _recipient, address _token) public {
         factory = UniswapFactoryInterface(_factory);
-        outToken = ERC20(_token);
+        outToken = IERC20(_token);
         recipient = _recipient;
     }
 
@@ -54,8 +54,8 @@ contract Unipay {
             UniswapExchangeInterface exchange
         ) = price(_token, _value);
 
-        ERC20(_token).transferTokens(_from, address(this), tokenCost);
-        ERC20(_token).approveTokens(address(exchange), tokenCost);
+        IERC20(_token).transferTokens(_from, address(this), tokenCost);
+        IERC20(_token).approveTokens(address(exchange), tokenCost);
         exchange.swapTokens(_value, tokenCost, etherCost, _deadline, outToken);
         outToken.approveTokens(recipient, _value);
     }

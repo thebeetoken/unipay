@@ -1,13 +1,13 @@
 pragma solidity ^0.5.2;
 
-import "openzeppelin-solidity/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 library SafeERC20 {
     using SafeMath for uint256;
 
     function transferTokens(
-      ERC20 _token,
+      IERC20 _token,
       address _from,
       address _to,
       uint256 _value
@@ -24,7 +24,7 @@ library SafeERC20 {
     }
 
     function approveTokens(
-      ERC20 _token,
+      IERC20 _token,
       address _spender,
       uint256 _value
     ) internal {
