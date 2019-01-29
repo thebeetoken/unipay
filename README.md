@@ -8,6 +8,9 @@ Unipay accepts tokens and ether, converts these to the desired token, and
 makes `approve` calls to allow the payment recipient to transfer those tokens
 from the contract.
 
+Authored by [Vic Woeltjen](https://github.com/woeltjen) for
+[The Bee Token](https://github.com/thebeetoken) 🐝
+
 ## Install
 
     npm i
