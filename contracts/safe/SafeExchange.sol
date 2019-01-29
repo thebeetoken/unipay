@@ -7,6 +7,15 @@ import 'uniswap-solidity/contracts/Uniswap.sol';
 library SafeExchange {
     using SafeMath for uint256;
 
+    modifier swaps(uint256 _value, ERC20 _token) {
+        uint256 nextBalance = _token.balanceOf(address(this)).add(_value);
+        _;
+        require(
+            _token.balanceOf(address(this)) >= nextBalance,
+            "Balance validation failed after swap."
+        );
+    }
+
     function swapTokens(
         UniswapExchangeInterface _exchange,
         uint256 _outValue,
@@ -14,18 +23,13 @@ library SafeExchange {
         uint256 _ethValue,
         uint256 _deadline,
         ERC20 _outToken
-    ) internal {
-        uint256 nextBalance = _outToken.balanceOf(address(this)).add(_outValue);
+    ) internal swaps(_outValue, _outToken) {
         _exchange.tokenToTokenSwapOutput(
             _outValue,
             _inValue,
             _ethValue,
             _deadline,
             address(_outToken)
-        );
-        require(
-            _outToken.balanceOf(address(this)) >= nextBalance,
-            "Balance validation failed after swap."
         );
     }
 
@@ -35,12 +39,7 @@ library SafeExchange {
         uint256 _ethValue,
         uint256 _deadline,
         ERC20 _outToken
-    ) internal {
-        uint256 nextBalance = _outToken.balanceOf(address(this)).add(_outValue);
+    ) internal swaps(_outValue, _outToken) {
         _exchange.ethToTokenSwapOutput.value(_ethValue)(_outValue, _deadline);
-        require(
-            _outToken.balanceOf(address(this)) >= nextBalance,
-            "Balance validation failed after swap."
-        );
     }
 }
