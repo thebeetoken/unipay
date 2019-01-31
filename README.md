@@ -39,6 +39,8 @@ Unipay exposes the following methods:
 * `price(address token, uint256 value)`: Get the cost, in units of the
   identified `token`, of making a payment of the specified `value` in
   this contract's configured payment token.
+* `price(uint256 value)`: Get the cost, in wei, of making a payment of the
+  specified `value` in this contract's configured payment token.
 * `collect(address from, address token, uint256 value, uint256 deadline)`:
   Collect payment in the specified `token` from the `from` address and
   swap for `value` of the configured payment token, with a transaction
@@ -46,3 +48,7 @@ Unipay exposes the following methods:
   address must previously `approve` this contract to transfer a sufficient
   amount to complete the swap; user code should call `price` to determine an
   appropriate approval amount.
+* `pay(uint256 value, uint256 deadline) payable`: Deliver payment as ether
+  and swap for `value` of the configured payment token, with a transaction
+  `deadline` specified in seconds since the start of 1970. Any excess ether
+  sent with this call will be returned to the caller.
